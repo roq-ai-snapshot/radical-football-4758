@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model academy {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name    String @db.VarChar(255)
+  user_id String @db.Uuid
+  user    user   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  team    team[]
+}
+
+model attendance {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  player_id String   @db.Uuid
+  date      DateTime @db.Date
+  status    String   @db.VarChar(50)
+  player    player   @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model coach_team {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @db.Uuid
+  team_id String @db.Uuid
+  team    team   @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user    user   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model parent_child {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parent_id String @db.Uuid
+  child_id  String @db.Uuid
+  player    player @relation(fields: [child_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user      user   @relation(fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model player {
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                 String                    @db.Uuid
+  team_id                 String                    @db.Uuid
+  position                String                    @db.VarChar(50)
+  performance_data        String?                   @db.VarChar(255)
+  attendance              attendance[]
+  parent_child            parent_child[]
+  team                    team                      @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                    user                      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  player_training_program player_training_program[]
+}
+
+model player_training_program {
+  id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  player_id           String           @db.Uuid
+  training_program_id String           @db.Uuid
+  player              player           @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  training_program    training_program @relation(fields: [training_program_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model team {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String       @db.VarChar(255)
+  academy_id String       @db.Uuid
+  coach_team coach_team[]
+  player     player[]
+  academy    academy      @relation(fields: [academy_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model training_program {
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                    String                    @db.VarChar(255)
+  description             String?                   @db.VarChar(255)
+  coach_id                String                    @db.Uuid
+  player_training_program player_training_program[]
+  user                    user                      @relation(fields: [coach_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email            String             @unique @db.VarChar(255)
+  firstName        String?            @db.VarChar(255)
+  lastName         String?            @db.VarChar(255)
+  roq_user_id      String             @db.VarChar(255)
+  tenant_id        String             @db.VarChar(255)
+  academy          academy[]
+  coach_team       coach_team[]
+  parent_child     parent_child[]
+  player           player[]
+  training_program training_program[]
+}
